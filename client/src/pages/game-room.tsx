@@ -12,8 +12,8 @@ import type { GameRoom } from "@shared/schema";
 export default function GameRoom() {
   const { roomId } = useParams();
 
-  const { data: room, isLoading } = useQuery<GameRoom>({
-    queryKey: ["/api/rooms", roomId],
+  const { data: room, isLoading, error } = useQuery<GameRoom>({
+    queryKey: [`/api/rooms/${roomId}`],
     refetchInterval: 1000,
   });
 
@@ -22,7 +22,7 @@ export default function GameRoom() {
       await apiRequest("POST", `/api/rooms/${roomId}/move`, { player, move });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/rooms", roomId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/rooms/${roomId}`] });
     },
   });
 
@@ -31,12 +31,20 @@ export default function GameRoom() {
       await apiRequest("POST", `/api/rooms/${roomId}/reset`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/rooms", roomId] });
+      queryClient.invalidateQueries({ queryKey: [`/api/rooms/${roomId}`] });
     },
   });
 
+  if (error) {
+    return <div>Error loading room: {(error as Error).message}</div>;
+  }
+
   if (isLoading || !room) {
-    return <div>Loading...</div>;
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <p>Loading room {roomId}...</p>
+      </div>
+    );
   }
 
   return (
@@ -49,7 +57,7 @@ export default function GameRoom() {
         </CardHeader>
         <CardContent className="space-y-6">
           <GameStatus room={room} />
-          
+
           {room.status === "playing" && (
             <MoveSelector
               onMove={(move) => {
