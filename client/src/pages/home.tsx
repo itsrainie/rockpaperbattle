@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,14 @@ export default function Home() {
   const [roomId, setRoomId] = useState("");
   const { toast } = useToast();
 
+  useEffect(() => {
+    // Load player name from localStorage if exists
+    const savedName = localStorage.getItem("playerName");
+    if (savedName) {
+      setPlayerName(savedName);
+    }
+  }, []);
+
   const createRoom = async () => {
     if (!playerName) {
       toast({ title: "Please enter your name", variant: "destructive" });
@@ -19,6 +27,8 @@ export default function Home() {
     }
 
     try {
+      // Save player name to localStorage
+      localStorage.setItem("playerName", playerName);
       const res = await apiRequest("POST", "/api/rooms", { player1: playerName });
       const room = await res.json();
       navigate(`/room/${room.id}`);
@@ -34,6 +44,8 @@ export default function Home() {
     }
 
     try {
+      // Save player name to localStorage
+      localStorage.setItem("playerName", playerName);
       const res = await apiRequest("POST", `/api/rooms/${roomId}/join`, { player2: playerName });
       const room = await res.json();
       navigate(`/room/${room.id}`);
